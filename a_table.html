@@ -2,7 +2,7 @@
 	<div class="col-md-4" ng-if="title">
 		<h4 class="pull-left report-title">{{title}}</h4>
 	</div>
-	
+
 </div>
 
 <br/>
@@ -11,14 +11,22 @@
 		<table class="a-table" >
 			<thead>
 			  <tr>
-			    <th ng-repeat="column in columns">{{column.header_name}}</th>
-			  </tr>
+				  <th ng-repeat="column in columns">{{column.label}}
+				  </th>
+				</tr>
 			</thead>
 			<tbody>
-			  <tr ng-repeat="data in tableData">
-			    <td ng-repeat="column in columns">{{data[column.label]}}</td>
-			  </tr>
+
+				<tr ng-repeat="row in rows | slice:startVal():endVal()">
+
+					<td ng-repeat="column in columns" >
+						<span>{{row[column.label] || '--'}}</span>
+
+					</td>
+				</tr>
 			</tbody>
 		</table>
+		<pagination total-items="pager.totalItems" ng-model="pager.currentPage" ng-change="pageChanged()" items-per-page="pager.itemsPerPage"></pagination>
+		Page: {{pager.currentPage}}
 	</div>
 </div>

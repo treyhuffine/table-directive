@@ -1,6 +1,6 @@
 "use strict";
 
-var app = angular.module('myTable', [])
+var app = angular.module('myTable', ['ui.bootstrap'])
 .factory('tableService', ['$document', '$q', '$rootScope',
 		function($document, $q, $rootScope){
 
@@ -10,46 +10,44 @@ var app = angular.module('myTable', [])
 '$scope',
 '$http',
 function($scope, $http){
+	$scope.tableData = [];
+	var url= "http://api.openweathermap.org/data/2.5/find?lat=37.54&lon=-121.98&cnt=50&callback=JSON_CALLBACK";
+	$scope.getWeather = function() {
+        $http({
+          method: 'JSONP',
+          url: url
+          }).success(function(data) {
+          var tdata = [];
+          angular.forEach(data.list, function(value){
+            tdata.push({
+            	id: value.id,
+            	name: value.name,
+            	weather: value.weather[0].main,
+            	clouds: value.clouds.all
+            });
+          });
+          $scope.tableData = tdata;
+          $scope.columns = [{data_type: "string", label: "id", visible: true},
+          							  {data_type: "string", label: "name", visible: true},
+          							  {data_type: "string", label: "weather", visible: true},
+          							  {data_type: "string", label: "clouds", visible: true}
 
-  $scope.columns = [
-	  {label: "name",
-	  data_type: "string",
-	  header_name: "First Name of Person"
-	  },
-	  {label: "phone",
-	  data_type: "string",
-	  header_name: "Work Phone"
-	  },
-	  {label: "email",
-	   data_type: "string",
-	   header_name: "Work Email"
-	  }
-	  ];
+          							];
+        });
+      }
 
-	$scope.tableData = [
-	  {"name": "Aldo Briano",
-	   "phone": "6505551122",
-	   "email": "aldo@yiftee.com"
-	  },
-	  {"name": "Jon Smith",
-	   "phone": "6505551226",
-	   "email": "jsmith@gmail.com"
-	  },
-	  {"name": "Bob Mullen",
-	   "phone": "4085551122",
-	   "email": "bmullen@gmail.com"
-	  },
-	  {"name": "Carol Stone",
-	   "phone": "4155351124",
-	   "email": "cstone@gmail.com"
-	  },
-	  {"name": "Richard Tolbert",
-	   "phone": "6502351123",
-	   "email": "rt@gmail.com"
-	  },
-	  ];
+  $scope.getWeather();
+
+	$scope.totalItems = $scope.tableData.length;
+// 	console.log($scope.totalItems);
+  $scope.maxSize = 5;
 
 }])
+.filter('slice', function(){
+  return function(arr, start, end){
+    return arr.slice(start, end);
+  };
+})
 .directive('aTable', function(){
 	return {
 		restrict: 'E',
@@ -60,10 +58,45 @@ function($scope, $http){
 		},
 		templateUrl: 'a_table.html',
 		controller: ['$scope', '$window', '$filter', function($scope, $window, $filter){
-			
-			
-			
+			//rows to be filters/searched
+				$scope.rows = [];
+
+			  $scope.pager = {
+			    currentPage: 1,
+			    totalItems: 0,
+			    itemsPerPage: 5
+			  }
+
+				//copy report data passed in into a rows array we can modify and reorder
+				function initRows(){
+					$scope.rows = [];
+
+					angular.forEach($scope.tableData, function(row){
+					  $scope.rows.push(row);
+					});
+
+
+
+				}
+				$scope.startVal = function() {
+				  return $scope.pager.currentPage * $scope.pager.itemsPerPage - 5;
+				};
+				$scope.endVal = function() {
+				  return $scope.pager.currentPage * $scope.pager.itemsPerPage;
+				};
+
+				function initPager() {
+				  $scope.pager.totalItems = $scope.tableData.length;
+				  $scope.pager.currentPage = 1;
+				}
+
+				//if original tableData rows change, initialize the rows again
+				$scope.$watch('tableData', function() {
+					initRows();
+          initPager();
+			  	});
+
 		}]
-		
+
 	}
 });
